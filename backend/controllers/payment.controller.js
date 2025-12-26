@@ -108,9 +108,10 @@ exports.verifyPayment = async (req, res) => {
             });
 
             // --- NTFY NOTIFICATION ---
+            let user;
             try {
                 // Fetch full user details
-                const user = await prisma.user.findUnique({ where: { id: userId } });
+                user = await prisma.user.findUnique({ where: { id: userId } });
                 
                 const itemList = items.map(i => `${i.quantity}x ${i.product.title}`).join(', ');
                 const message = `💰 New Order! ₹${amount}\n👤 ${user?.name || 'Unknown'} (${user?.mobile || user?.email || 'No Contact'})\n📍 ${dropZone}\n📦 ${itemList}`;
@@ -123,8 +124,12 @@ exports.verifyPayment = async (req, res) => {
                     }
                 });
                 console.log("✅ Ntfy notification sent");
-                
-                // --- TELEGRAM + ADMIN EMAIL NOTIFICATION ---
+            } catch (notifyErr) {
+                console.error("❌ Failed to send Ntfy notification:", notifyErr.message);
+            }
+
+            // --- TELEGRAM + ADMIN EMAIL NOTIFICATION (Independent) ---
+            try {
                 await notifyNewOrder({
                     amount,
                     orderId: razorpay_order_id,
@@ -134,8 +139,7 @@ exports.verifyPayment = async (req, res) => {
                     customerContact: user?.mobile || user?.email || 'No Contact'
                 });
             } catch (notifyErr) {
-                console.error("❌ Failed to send Ntfy notification:", notifyErr.message);
-                // Don't block the response
+                console.error("❌ Failed to send Telegram/Email notification:", notifyErr.message);
             }
             // --- EMAIL NOTIFICATION ---
             let emailSent = false;
