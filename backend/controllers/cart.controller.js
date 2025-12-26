@@ -144,3 +144,19 @@ exports.removeFromCart = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+// Clear entire cart (after successful order)
+exports.clearCart = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    await prisma.cartItem.deleteMany({
+      where: { userId }
+    });
+
+    res.json({ message: 'Cart cleared successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to clear cart' });
+  }
+};

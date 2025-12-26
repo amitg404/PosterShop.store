@@ -106,12 +106,13 @@ exports.getAllProducts = async (req, res) => {
         
         whereClause.isAvailable = true; // Only available items
 
-        // Search Logic
+        // Search Logic - Search in title, description, category, and tags
         if (search) {
             whereClause.OR = [
                 { title: { contains: search } }, 
                 { description: { contains: search } },
-                { category: { contains: search } }
+                { category: { contains: search } },
+                { tags: { contains: search } }
             ];
             // Clear bucket fetch exclusion if searching
             delete whereClause.AND; 

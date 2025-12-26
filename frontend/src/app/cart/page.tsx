@@ -190,7 +190,8 @@ export default function CartPage() {
         <div className="lg:col-span-2">
           <h1 className="text-3xl font-bold mb-6">Your Cart ({items.reduce((a,b)=>a+b.quantity,0)})</h1>
           
-          {items.reduce((a,b)=>a+b.quantity,0) === 3 && (
+          {/* First Order Promo - Only for guests or users with 0 orders */}
+          {items.reduce((a,b)=>a+b.quantity,0) === 3 && (!user || user.orderCount === 0 || user.orderCount === undefined) && (
               <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}

@@ -26,7 +26,7 @@ interface CartState {
   addToCart: (product: CartItem['product']) => Promise<void>;
   removeFromCart: (productId: string) => Promise<void>;
   fetchCart: () => Promise<void>;
-  clearCart: () => void;
+  clearCart: () => Promise<void>;
   
   triggerAnimation: (x: number, y: number, image: string) => void;
   resetAnimation: () => void;
@@ -183,7 +183,24 @@ export const useCartStore = create<CartState>()(
               // If guest, do nothing, rely on persisted state
           },
 
-          clearCart: () => set({ items: [] }),
+          clearCart: async () => {
+              const { token } = useAuthStore.getState();
+              
+              // Clear local state first (optimistic)
+              set({ items: [], claimedOffer: null, lastCelebratedTier: 0 });
+              
+              // If logged in, also clear backend cart
+              if (token) {
+                  try {
+                      await axios.delete('/api/cart/clear', {
+                          headers: { Authorization: `Bearer ${token}` }
+                      });
+                  } catch (err) {
+                      console.error("Failed to clear backend cart:", err);
+                      // Don't throw - cart is already cleared locally, user has moved on
+                  }
+              }
+          },
 
           triggerAnimation: (x, y, image) => set({ 
               isAnimating: true, 
